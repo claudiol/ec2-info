@@ -1,7 +1,7 @@
 ---
 - name: 
 - name: Create MOTD for EC2 instance info
-  hosts: all
+  hosts: localhost
   become: true
   
   tasks:
@@ -23,6 +23,7 @@
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
+      delegate_to: ec2_instance_facts.instances[0].public_ip_address
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Production host for Fedora Lane
@@ -34,6 +35,7 @@
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
+      delegate_to: ec2_instance_facts.instances[0].public_ip_address
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the QA host for Fedora Lane
@@ -45,6 +47,7 @@
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
+      delegate_to: ec2_instance_facts.instances[0].public_ip_address
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Development host for Fedora Lane
