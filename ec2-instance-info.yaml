@@ -21,7 +21,7 @@
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
-      delegate_to: ec2_instance_facts.instances[0].public_ip_address
+      delegate_to: ec2_instance_facts.instances[1].network_interfaces[0].association.public_ip
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Production host for Fedora Lane
@@ -33,21 +33,21 @@
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
-      delegate_to: ec2_instance_facts.instances[0].public_ip_address
+      delegate_to: ec2_instance_facts.instances[1].network_interfaces[0].association.public_ip
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the QA host for Fedora Lane
         mode: '0644'
-      when: ec2_instance_facts.instances[0].tags.Environment == "qa"
+      when: ec2_instance_facts.instances[1].tags.Environment == "qa"
 
     # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
     # only if the ec2 instance tag Environment and compare it to the value 'dev'.
     - name: Create a tasks that creates a file called flane-motd that contains "Welcome
         to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
         value production.
-      delegate_to: ec2_instance_facts.instances[0].public_ip_address
+      delegate_to: ec2_instance_facts.instances[1].network_interfaces[0].association.public_ip
       ansible.builtin.copy:
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Development host for Fedora Lane
         mode: '0644'
-      when: ec2_instance_facts.instances[0].tags.Environment == "dev"
+      when: ec2_instance_facts.instances[1].tags.Environment == "dev"
