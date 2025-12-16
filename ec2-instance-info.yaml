@@ -7,7 +7,7 @@
     - name: Create a task that gets ec2 instance tag info for flane-rhel-srv-01
       register: ec2_instance_facts
       amazon.aws.ec2_instance_info:
-        region: us-east-1
+        region: us-east-2
         filters:
           tag:Name: flane-rhel-srv-01
 
