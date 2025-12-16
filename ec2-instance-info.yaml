@@ -25,7 +25,7 @@
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Production host for Fedora Lane
         mode: '0644'
-      when: ec2_instance_facts.instances[0].tags.environment == "production"
+      when: ec2_instance_facts.instances[0].tags.Environment == "production"
 
     # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
     # only if the ec2 instance tag Environment and compare it to the value 'qa'.
@@ -36,7 +36,7 @@
         dest: /etc/motd.d/flane-motd
         content: Welcome to the QA host for Fedora Lane
         mode: '0644'
-      when: ec2_instance_facts.instances[0].tags.environment == "qa"
+      when: ec2_instance_facts.instances[0].tags.Environment == "qa"
 
     # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
     # only if the ec2 instance tag Environment and compare it to the value 'dev'.
@@ -47,4 +47,4 @@
         dest: /etc/motd.d/flane-motd
         content: Welcome to the Development host for Fedora Lane
         mode: '0644'
-      when: ec2_instance_facts.instances[0].tags.environment == "dev"
+      when: ec2_instance_facts.instances[0].tags.Environment == "dev"
