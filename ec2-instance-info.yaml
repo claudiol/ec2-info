@@ -1,7 +1,6 @@
 ---
 - name: Create MOTD for EC2 instance info
   hosts: localhost
-  become: true
   
   tasks:
     # Create a task that gets ec2 instance tag info for flane-rhel-srv-01
