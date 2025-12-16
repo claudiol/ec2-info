@@ -1,0 +1,51 @@
+---
+---
+- name: Create MOTD for EC2 instance info
+  hosts: localhost
+
+  tasks:
+    # Create a task that gets ec2 instance tag info for flane-rhel-srv-01
+    - name: Create a task that gets ec2 instance tag info for flane-rhel-srv-01
+      register: ec2_instance_facts
+      amazon.aws.ec2_instance_info:
+        region: us-east-1
+        filters:
+          tag:Name: flane-rhel-srv-01
+
+    # Create a task to look into the ec2 instance ec2_instance_facts
+    - name: Create a task to look into the ec2 instance ec2_instance_facts
+      ansible.builtin.debug:
+        var: ec2_instance_facts
+
+    # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
+    # only if the ec2 instance tag Environment and compare it to the value production.
+    - name: Create a tasks that creates a file called flane-motd that contains "Welcome
+        to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
+        value production.
+      ansible.builtin.copy:
+        dest: /etc/motd.d/flane-motd
+        content: Welcome to the Production host for Fedora Lane
+        mode: '0644'
+      when: ec2_instance_facts.instances[0].tags.environment == "production"
+
+    # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
+    # only if the ec2 instance tag Environment and compare it to the value 'qa'.
+    - name: Create a tasks that creates a file called flane-motd that contains "Welcome
+        to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
+        value production.
+      ansible.builtin.copy:
+        dest: /etc/motd.d/flane-motd
+        content: Welcome to the QA host for Fedora Lane
+        mode: '0644'
+      when: ec2_instance_facts.instances[0].tags.environment == "qa"
+
+    # Create a tasks that creates a file called flane-motd that contains "Welcome to Fedora Lane"
+    # only if the ec2 instance tag Environment and compare it to the value 'dev'.
+    - name: Create a tasks that creates a file called flane-motd that contains "Welcome
+        to Fedora Lane" only if the ec2 instance tag Environment and compare it to the
+        value production.
+      ansible.builtin.copy:
+        dest: /etc/motd.d/flane-motd
+        content: Welcome to the Development host for Fedora Lane
+        mode: '0644'
+      when: ec2_instance_facts.instances[0].tags.environment == "dev"
