@@ -1,5 +1,4 @@
 ---
----
 - name: Create MOTD for EC2 instance info
   hosts: localhost
 
