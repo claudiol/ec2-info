@@ -1,0 +1,146 @@
+---
+- name: Create FLane VPC environment
+  hosts: localhost
+
+  tasks:
+    # Create a new VPC using the amazon.aws module
+    - name: Create a new Fedora Lane VPC environments
+      register: flane_vpcs
+      amazon.aws.ec2_vpc_net:
+        name: "flane-vpc-{{ item.name }}"
+        cidr_block: "{{ item.cidr }}"
+        region: us-east-2
+        state: present
+      with_items:
+        - name: development
+          cidr: 10.0.0.0/16
+        - name: qa
+          cidr: 10.0.0.0/16
+        - name: production
+          cidr: 10.0.0.0/16
+
+    # Create a task to get info for a vpc using amazon.aws ansible module
+    - name: Create a task to get info for a vpc using amazon.aws ansible module
+      register: _vpc_id
+      amazon.aws.ec2_vpc_net_info:
+        filters:
+          tag:Name: flane-vpc-{{ item }}
+        region: us-east-2
+      loop: 
+        - development
+        - qa
+        - production
+      tags:
+        - info
+
+    - name: Debug vpc info
+      ansible.builtin.debug:
+        msg: "Name: {{ item.vpcs[0].tags.Name }} The VPC id: {{ item.vpcs[0].vpc_id }}"
+      loop: "{{ _vpc_id.results |flatten(levels=1) }}"
+      when: debug is defined | default(false) | bool
+
+        # Create task to create an AWS internet gateway for each vpc
+    - name: Create task to create an AWS internet gateway for each vpc
+      register: igw_create
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ item.vpcs[0].vpc_id }}"
+        region: us-east-2
+        tags:
+          Name: "flane-igw-{{ item.item}}"
+        state: present
+      loop: "{{ _vpc_id.results |flatten(levels=1) }}"
+      tags:
+        - info
+
+    # Debug IGW
+    - name: Debug IGW
+      ansible.builtin.debug:
+        var: igw_create.results
+      when: debug is defined | default(false) | bool
+
+    # Debug loops
+    - name: Debug loops
+      ansible.builtin.debug:
+        msg: "Loop 1: {{ item[0].item.item }} Loop 2: {{ item[1].item }}"
+      when: 
+        - debug is defined | default(false) | bool
+        - item[0].item.item  == item[1].item
+      with_nested:
+        - "{{ igw_create.results | flatten(levels=1) }}"
+        - "{{ _vpc_id.results | flatten(levels=1) }}"
+         
+    # Create a task to get the route for each vpc 
+    - name: Create a task to get the route for each vpc
+      register: routes
+      amazon.aws.ec2_vpc_route_table_info:
+        region: us-east-2
+        filters:
+          vpc-id: "{{ item.vpcs[0].vpc_id }}"
+      loop: "{{ _vpc_id.results | flatten(levels=1) }}"
+
+    # Debug
+    - name: Debug routes
+      ansible.builtin.debug:
+        var: routes
+      when: debug is defined | default(false) | bool
+
+    # Create task to create a subnet for each vpc using _vpc_id.results
+    - name: Create task to create a subnet for each vpc using flane_vpcs.results
+      register: flane_subnets
+      amazon.aws.ec2_vpc_subnet:
+        vpc_id: "{{ item.vpcs[0].vpc_id }}"
+        cidr: 10.0.1.0/24
+        region: us-east-2
+        tags:
+          Name: "{{ item.vpcs[0].tags.Name}}-subnet"
+        state: present
+      loop: "{{ _vpc_id.results |flatten(levels=1) }}"
+
+    # create a task to add a default route to the retrieved routes
+    - name: Create a task to add a default route to the retrieved routes
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ item[1].route_tables[0].vpc_id }}"
+        subnets:
+          - "flane-vpc-{{ item[0].item.item }}-subnet"
+        region: us-east-2
+        tags:
+          Name: "Default route for {{ item[1].item.vpcs[0].vpc_id }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ item[0].gateway_id }}"
+        state: present
+      when: item[0].item.item  == item[1].item.item
+      with_nested:
+        - "{{ igw_create.results | flatten(levels=1) }}"
+        - "{{ routes.results | flatten(levels=1) }}"
+
+    # Create Security Groups for production, qa and development to open tcp port 22 and 2222 and associate them with the VPC
+    - name: Create Security Groups for production, qa and development to open tcp port
+        22 and 2222 and associate them with the VPC
+      register: flane_sg
+      amazon.aws.ec2_security_group:
+        name: flane-sg-{{ item.type }}
+        description: a security group for flane {{ item.type }} servers
+        vpc_id: "{{ item.vpc }}"
+        region: us-east-2
+        state: present
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 2222
+            to_port: 2222
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 35443
+            to_port: 35443
+            cidr_ip: 0.0.0.0/0
+      with_items:
+        - type: development
+          vpc: "{{ _vpc_id.results[0].vpcs[0].vpc_id }}"
+        - type: qa
+          vpc: "{{ _vpc_id.results[1].vpcs[0].vpc_id }}"
+        - type: production
+          vpc: "{{ _vpc_id.results[2].vpcs[0].vpc_id }}"
